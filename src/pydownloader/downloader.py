@@ -20,7 +20,11 @@ class VideoToAudioExporter(Protocol):
     This class is intended as a base class and should not be instantiated.
     """
 
-    def export(self, source_url: str, destination_folder: pathlib.Path) -> Monad:
+    def export(
+        self,
+        source_url: str,
+        destination_folder: pathlib.Path
+    ) -> Monad:
         """Save the given url as audio.
 
         Args:
@@ -37,11 +41,19 @@ class VideoToAudioExporter(Protocol):
 class Mp3Exporter:
     """Covert a video given by a url to mp3 format."""
 
-    def _save_file_to_disk(self, file: pathlib.Path, destination_folder: pathlib.Path) -> Monad:
+    def _save_file_to_disk(
+        self,
+        file: pathlib.Path,
+        destination_folder: pathlib.Path
+    ) -> Monad:
         ret: bool = True
         error: Exception | None = None
         print("Entering moving folder")
         try:
+            base, ext = os.path.splitext(file.name)
+            new_file = base + '.mp3'
+            print(new_file)
+            os.rename(file, new_file)
         except Exception as e:
             ret = False
             error = e
@@ -68,7 +80,8 @@ class Mp3Exporter:
             ret = False
             err = e
         else:
-            return_monad = self._save_file_to_disk(saved_file, destination_folder)
+            return_monad = self._save_file_to_disk(saved_file,
+                                                   destination_folder)
             ret = return_monad.success
             err = return_monad.error
 
