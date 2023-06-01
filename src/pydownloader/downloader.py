@@ -6,6 +6,7 @@ Created: 31.05.2023
 
 import pathlib
 import os
+import shutil
 from typing import Protocol, Any
 
 import pytube
@@ -36,13 +37,14 @@ class VideoToAudioExporter(Protocol):
 class Mp3Exporter:
     """Covert a video given by a url to mp3 format."""
 
-    def _save_file_to_disk(self, file: Any) -> Monad:
+    def _save_file_to_disk(self, file: pathlib.Path, destination_folder: pathlib.Path) -> Monad:
         ret: bool = True
         error: Exception | None = None
-        base, ext = os.path.splitext(file)
-        new_file = base + '.mp3'
-        # print(new_file)
-        os.rename(file, new_file)
+        print("Entering moving folder")
+        try:
+        except Exception as e:
+            ret = False
+            error = e
         return Monad(ret, error)
 
     def export(self, source_url, destination_folder: pathlib.Path) -> Monad:
@@ -60,12 +62,13 @@ class Mp3Exporter:
         try:
             video = pytube.YouTube(source_url)
             audio = video.streams.filter(only_audio=True).first()
-            saved_file = audio.download(output_path=destination_folder)
+            saved_file = pathlib.Path(audio.download())
+            print(saved_file)
         except Exception as e:
             ret = False
             err = e
         else:
-            return_monad = self._save_file_to_disk(saved_file)
+            return_monad = self._save_file_to_disk(saved_file, destination_folder)
             ret = return_monad.success
             err = return_monad.error
 
