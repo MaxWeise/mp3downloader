@@ -14,8 +14,8 @@ from pathlib import Path
 
 from pydownloader.downloader import Mp3Exporter
 
-class TestMp3Exporter(unittest.TestCase):
 
+class TestMp3Exporter(unittest.TestCase):
     def setUp(self):
         self.test_source: str = r"https://youtu.be/wOFVrjL-XBM"
 
@@ -38,7 +38,9 @@ class TestMp3Exporter(unittest.TestCase):
         actual: Any = under_test.export(random_url)
 
     def tearDown(self):
-        ...
+        _file = pathlib.Path(r"Navi_Hey_listen_all_sounds.mp3")
+        if _file.is_file():
+            os.remove(_file)
 
 
 if __name__ == "__main__":
