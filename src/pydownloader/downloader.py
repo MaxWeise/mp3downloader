@@ -5,13 +5,14 @@ Created: 31.05.2023
 """
 
 import pathlib
+from pathlib import Path
 import os
 import shutil
 from typing import Protocol, Any
 
+import moviepy
+import moviepy.editor
 import pytube
-
-from pydownloader.monad import Monad
 
 
 class VideoToAudioExporter(Protocol):
@@ -20,11 +21,7 @@ class VideoToAudioExporter(Protocol):
     This class is intended as a base class and should not be instantiated.
     """
 
-    def export(
-        self,
-        source_url: str,
-        destination_folder: pathlib.Path
-    ) -> Monad:
+    def export(self, source_url: str, destination_folder: pathlib.Path) -> Any:
         """Save the given url as audio.
 
         Args:
@@ -34,55 +31,50 @@ class VideoToAudioExporter(Protocol):
         Returns:
             Monad: Wrapper object for success and error values.
         """
-        raise NotImplementedError(
-            f"This method is not implemented for the type {self}")
+        raise NotImplementedError(f"This method is not implemented for the type {self}")
 
 
 class Mp3Exporter:
     """Covert a video given by a url to mp3 format."""
 
-    def _save_file_to_disk(
-        self,
-        file: pathlib.Path,
-        destination_folder: pathlib.Path
-    ) -> Monad:
-        ret: bool = True
-        error: Exception | None = None
-        print("Entering moving folder")
-        try:
-            base, ext = os.path.splitext(file.name)
-            new_file = base + '.mp3'
-            print(new_file)
-            os.rename(file, new_file)
-        except Exception as e:
-            ret = False
-            error = e
-        return Monad(ret, error)
+    def _download_video(self, source_url: str) -> Path:
+        video = pytube.YouTube(source_url)
+        video_stream = video.streams.filter(only_audio=True).first()
+        path_to_file = video_stream.download()
+        return pathlib.Path(path_to_file)
 
-    def export(self, source_url, destination_folder: pathlib.Path) -> Monad:
+    def _convert_video_to_audio(self, video_file: Path) -> bool:
+        try:
+            absolute_path = video_file.absolute()
+            _video_file: str = absolute_path.as_posix()
+            _video_file = _video_file.replace(" ", "_")
+            base, ext = _video_file.split(".")
+            _video_file = f"{base}.mp3"
+
+            video_file.rename(_video_file)
+            # print(_video_file, type(_video_file))
+        except Exception as e:
+            print(f"While converting from mp4 to mp3, this exception occured: {e}")
+            return False
+        return True
+
+    # TODO: when path does not exist or causes an error
+    # Raise an exception which can be handled in the main programm
+    def export(self, source_url) -> bool | None:
         """Save the given video as audio.
 
         Args:
             source_url: The object to be converted.
 
         Returns:
-            Monad: Wrapper object for success and error values.
+            Path: Path to the downloaded mp3 file.
         """
-        ret: bool = True
-        err: Exception | None = None
-
+        ret: bool = False
         try:
-            video = pytube.YouTube(source_url)
-            audio = video.streams.filter(only_audio=True).first()
-            saved_file = pathlib.Path(audio.download())
-            print(saved_file)
+            video_file: Path = self._download_video(source_url)
+            ret = self._convert_video_to_audio(video_file)
         except Exception as e:
-            ret = False
-            err = e
-        else:
-            return_monad = self._save_file_to_disk(saved_file,
-                                                   destination_folder)
-            ret = return_monad.success
-            err = return_monad.error
+            # TODO: Re-Raise exception
+            print(e)
 
-        return Monad(ret, err)
+        return ret
