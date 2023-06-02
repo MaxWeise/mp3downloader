@@ -25,17 +25,18 @@ class TestMp3Exporter(unittest.TestCase):
         """Test the export function of the Mp3Converter."""
 
         under_test = Mp3Exporter()
-        actual: Path | None = under_test.export(self.test_source)
+        actual: bool | None = under_test.export(self.test_source)
 
         self.assertTrue(actual)
 
-    @unittest.skip("not implemented yet")
     def test_export_UrlDoesNotExist(self):
         """Test the export function of the Mp3Converter."""
         random_url: str = r"https://wwww.doesNotExist.random"
 
         under_test = Mp3Exporter()
-        actual: Any = under_test.export(random_url)
+        actual: bool | None = under_test.export(random_url)
+
+        self.assertFalse(actual)
 
     def tearDown(self):
         _file = pathlib.Path(r"Navi_Hey_listen_all_sounds.mp3")
